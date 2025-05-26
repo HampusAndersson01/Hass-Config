@@ -1,0 +1,78 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+homeassistant:
+  external_url: "http://homeassistant.local:8123"
+
+api:
+
+logger:
+  default: info # Set the default logging level (options: critical, fatal, error, warning, warn, info, debug, notset)
+
+http:
+  cors_allowed_origins:
+    - "http://localhost:53812"
+    - "http://localhost:3000"
+    - "http://192.168.50.59:53812"
+    - "http://192.168.50.32:53812"
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+  javascript_version: latest
+
+python_script:
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+sensor: !include sensors.yaml
+
+# homeassistant:
+#   customize:
+#     sensor.pc_cputemperature:
+#       unit_of_measurement: "°C"
+#   external_url: "https://dp8apez2lsk2ol6wffo7litasqdmew1d.ui.nabu.casa"
+#   auth_providers:
+#     - type: trusted_networks
+#       trusted_networks:
+#         - 192.168.50.32/32
+#       trusted_users:
+#         192.168.50.32: 17f49aca09744663a0ebe8110c6bc37d
+#       allow_bypass_login: true
+#     - type: homeassistant
+
+shell_command:
+  install_catt: "catt --version || pip install catt"
+  stop_catt: pkill -f "catt -d 192.168.50.32"
+  cast_dashboard: catt -d 192.168.50.32 cast_site http://192.168.50.59:53812/
+  cast_main: catt -d 192.168.50.32 cast_site https://dp8apez2lsk2ol6wffo7litasqdmew1d.ui.nabu.casa/dashboard-main2/0
+
+input_boolean:
+  phone_alarm:
+    name: Telefon Alarm
+    icon: mdi:alarm
+  christmas_mode:
+    name: Christmas Mode
+    initial: off
+    icon: mdi:snowflake
+  presence_mode:
+    name: Presence Mode
+    initial: on
+    icon: mdi:account-check
+  desk_focus_lights:
+    name: Desk Focus Lights
+    initial: off
+    icon: mdi:desk-lamp
+  night_mode:
+    name: Night Mode
+    initial: off
+    icon: mdi:weather-night
+
+input_text:
+  ollama_response:
+    name: Ollama Response
+    max: 25565
+
+  phone_alarm_response:
+    name: Phone Alarm Response
+    initial: "No response yet"
+    max: 255

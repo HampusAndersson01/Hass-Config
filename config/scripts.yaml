@@ -1,0 +1,15 @@
+trigger_cast_dashboard_to_nest_hub:
+  alias: Trigger Cast Dashboard to Nest Hub
+  sequence:
+  - action: shell_command.cast_dashboard
+    data: {}
+cast_lovelace_dashboard_to_nest_hub:
+  alias: Cast lovelace dashboard to nest hub
+  sequence:
+  - action: cast.show_lovelace_view
+    data:
+      entity_id: media_player.nesthub0445
+      dashboard_path: dashboard-nesthub
+      view_path: home
+  description: ''
+  icon: mdi:monitor-dashboard

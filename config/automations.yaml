@@ -1,0 +1,472 @@
+- id: '1704914971287'
+  alias: Turn Off Lights When Leaving Home
+  description: ''
+  trigger:
+  - platform: device
+    device_id: bff30a6fe85bff0e1c3ad44c10d1106f
+    domain: device_tracker
+    entity_id: 75643bebefc2117c70a65b091ca2039c
+    type: leaves
+    zone: zone.home
+  condition: []
+  action:
+  - service: light.turn_off
+    target:
+      entity_id: light.all
+      area_id:
+      - vardagsrum
+      - skrivbord
+    data: {}
+  mode: single
+- id: '1704915057928'
+  alias: Turn On Lights When Arriving Home
+  description: ''
+  trigger:
+  - platform: device
+    device_id: bff30a6fe85bff0e1c3ad44c10d1106f
+    domain: device_tracker
+    entity_id: 75643bebefc2117c70a65b091ca2039c
+    type: enters
+    zone: zone.home
+  condition: []
+  action:
+  - service: light.turn_on
+    metadata: {}
+    data:
+      kelvin: 4617
+      brightness: 126
+    target:
+      entity_id:
+      - light.all
+  mode: single
+- id: '1704991130018'
+  alias: Color change on PC startup
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.pc_cpuload
+    from: unavailable
+    to:
+  condition: []
+  action:
+  - service: light.turn_on
+    metadata: {}
+    data:
+      rgb_color:
+      - 108
+      - 0
+      - 138
+      brightness: 255
+    target:
+      entity_id:
+      - light.all
+  mode: single
+- id: '1710444764570'
+  alias: Turn On Lights on human presence
+  description: ''
+  trigger:
+  - type: occupied
+    platform: device
+    device_id: f477d80e5d55a576a7a91a1ae81c9939
+    entity_id: b43b94d64ce64c039b728cb5741170d5
+    domain: binary_sensor
+  condition: []
+  action:
+  - if:
+    - condition: time
+      after: 06:00:00
+      before: '16:00:00'
+    then:
+    - service: light.turn_on
+      metadata: {}
+      data:
+        brightness: 255
+        color_temp: 100
+        transition: 1
+      target:
+        entity_id: light.ljus
+    else:
+    - if:
+      - condition: time
+        after: 00:00:00
+        before: 06:00:00
+      then:
+      - if:
+        - condition: state
+          entity_id: sensor.pc_cpuload
+          attribute: unit_of_measurement
+          state: Otillgänglig
+        then:
+        - service: light.turn_on
+          metadata: {}
+          data:
+            color_temp: 250
+            brightness: 20
+          target:
+            entity_id:
+            - light.ljus
+        else:
+        - service: light.turn_on
+          metadata: {}
+          data:
+            transition: 1
+          target:
+            entity_id: light.all
+      else:
+      - service: light.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id:
+          - light.ljus
+  mode: single
+- id: '1710445133649'
+  alias: Turn Off Lights on no human presence
+  description: ''
+  trigger:
+  - type: not_occupied
+    platform: device
+    device_id: f477d80e5d55a576a7a91a1ae81c9939
+    entity_id: b43b94d64ce64c039b728cb5741170d5
+    domain: binary_sensor
+  condition: []
+  action:
+  - service: light.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: light.ljus
+  mode: single
+- id: '1712343436368'
+  alias: Lights to Red
+  description: ''
+  triggers: []
+  conditions: []
+  actions:
+  - metadata: {}
+    data:
+      rgb_color:
+      - 220
+      - 20
+      - 60
+      brightness: 255
+    action: light.turn_on
+    target:
+      entity_id: light.all
+  mode: single
+- id: '1712343482090'
+  alias: Lights to Green
+  description: ''
+  triggers: []
+  conditions: []
+  actions:
+  - metadata: {}
+    data:
+      rgb_color:
+      - 0
+      - 255
+      - 0
+      brightness: 255
+    action: light.turn_on
+    target:
+      entity_id: light.all
+  mode: single
+- id: '1712343577988'
+  alias: Lights to Blue
+  description: ''
+  triggers: []
+  conditions: []
+  actions:
+  - metadata: {}
+    data:
+      rgb_color:
+      - 0
+      - 0
+      - 255
+      brightness: 255
+    action: light.turn_on
+    target:
+      entity_id: light.all
+  mode: single
+- id: '1712343659272'
+  alias: Lights to Purple
+  description: ''
+  triggers: []
+  conditions: []
+  actions:
+  - metadata: {}
+    data:
+      rgb_color:
+      - 199
+      - 15
+      - 255
+      brightness: 255
+    action: light.turn_on
+    target:
+      entity_id: light.all
+  mode: single
+- id: '1712343772792'
+  alias: Lights to Cool White
+  description: ''
+  triggers: []
+  conditions: []
+  actions:
+  - metadata: {}
+    data:
+      brightness: 255
+      color_temp: 153
+      kelvin: 5737
+    target:
+      entity_id:
+      - light.all
+    action: light.turn_on
+  mode: single
+- id: '1712343801456'
+  alias: Lights to Warm White
+  description: ''
+  triggers: []
+  conditions: []
+  actions:
+  - metadata: {}
+    data:
+      brightness: 255
+      color_temp: 400
+      kelvin: 2000
+    action: light.turn_on
+    target:
+      entity_id: light.all
+  mode: single
+- id: '1712343824523'
+  alias: Lights to Mixed White
+  description: ''
+  triggers: []
+  conditions: []
+  actions:
+  - metadata: {}
+    data:
+      brightness: 255
+      color_temp: 200
+    action: light.turn_on
+    target:
+      entity_id: light.all
+  mode: single
+- id: '1722204057370'
+  alias: Snap Noti
+  description: Trigger action if snapchat notification
+  triggers:
+  - entity_id: sensor.z_fold5_last_notification
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: "{% set title = state_attr('sensor.z_fold5_last_notification',
+      'android.title') %} {% if title %}\n  {{ 'Carolin' in title }}\n{% else %}\n
+      \ false\n{% endif %}\n"
+  actions:
+  - data:
+      detected_entity_id: light.All
+      undetected_entity_id: light.vagglampa
+      presence_sensor: binary_sensor.presence_detector
+    action: python_script.snapchat_noti
+  - parallel: []
+    enabled: false
+- id: '1730325508586'
+  alias: Presence Special
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.narvarodetektor_narvaro
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - data:
+      rgb_color:
+      - 255
+      - 0
+      - 0
+      brightness_pct: 50
+    action: light.turn_on
+    target:
+      entity_id:
+      - light.zigbee_taklampa
+      - light.yeelight_strip
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - data:
+      rgb_color:
+      - 226
+      - 10
+      - 255
+      brightness_pct: 100
+      flash: long
+    target:
+      entity_id: light.vagglampa
+    action: light.turn_on
+  mode: single
+- id: '1732177735502'
+  alias: Dashboard to nest hub
+  description: ''
+  triggers:
+  - entity_id: sensor.pc_cpuload
+    from: unavailable
+    trigger: state
+  - entity_id: binary_sensor.narvarodetektor_narvaro
+    to: 'on'
+    trigger: state
+  - entity_id: binary_sensor.narvarodetektor_narvaro
+    to: 'off'
+    trigger: state
+  conditions:
+  - condition: template
+    value_template: '{{ states(''sensor.pc_cpuload'') | is_number and states(''sensor.pc_cpuload'')
+      | float > 0 }}
+
+      '
+  - condition: state
+    entity_id: binary_sensor.narvarodetektor_narvaro
+    state: 'on'
+  actions:
+  - action: shell_command.cast_dashboard
+    data: {}
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.narvarodetektor_narvaro
+        state: 'off'
+      - condition: template
+        value_template: '{{ states(''sensor.pc_cpuload'') == ''unavailable'' }}
+
+          '
+      sequence:
+      - action: shell_command.stop_catt
+        data: {}
+      - target:
+          entity_id: media_player.nesthub0445
+        action: media_player.turn_off
+        data: {}
+  mode: single
+- id: '1732643150461'
+  alias: Larm Webhook
+  description: Uppdaterar en sensor när mobilens larm går.
+  triggers:
+  - webhook_id: phone_alarm_triggered
+    trigger: webhook
+    allowed_methods:
+    - POST
+    - PUT
+    local_only: false
+  actions:
+  - target:
+      entity_id: input_boolean.phone_alarm
+    action: input_boolean.turn_on
+    data: {}
+  mode: single
+- id: '1732643837516'
+  alias: Återställ Telefon Alarm
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.phone_alarm
+    to: 'on'
+  actions:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.phone_alarm
+    data: {}
+- id: '1735029427177'
+  alias: 'Mini button handler '
+  description: ''
+  use_blueprint:
+    path: apollo1220/sonoff_zigbee_button.yaml
+    input:
+      button_id: 34dae53e941b06d5f1ab55e4b840f484
+      mode: parallel
+      press_action:
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: input_boolean.night_mode
+            state: 'on'
+          sequence:
+          - action: light.toggle
+            metadata: {}
+            data:
+              kelvin: 2546
+              brightness_pct: 10
+            target:
+              device_id: 744310f72a94ec67bed113d47bbfe369
+        - conditions: []
+          sequence:
+          - action: light.toggle
+            metadata: {}
+            data:
+              brightness_pct: 72
+              kelvin: 4038
+            target:
+              device_id: 744310f72a94ec67bed113d47bbfe369
+      double_press_action:
+      - action: input_boolean.toggle
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.night_mode
+      hold_action:
+      - action: light.turn_on
+        metadata: {}
+        data:
+          rgb_color:
+          - 255
+          - 0
+          - 0
+          brightness_pct: 100
+        target:
+          device_id: 744310f72a94ec67bed113d47bbfe369
+- id: '1735489774919'
+  alias: Run After Home Assistant Update
+  triggers:
+  - event: start
+    trigger: homeassistant
+  conditions:
+  - condition: template
+    value_template: '{{ (now() - as_datetime(states(''sensor.last_boot''))).total_seconds()
+      < 300 }}
+
+      '
+  actions:
+  - data:
+      message: Home Assistant has been updated and restarted.
+    action: notify.notify
+  - action: shell_command.install_catt
+    metadata: {}
+    data: {}
+- id: '1740348394238'
+  alias: Notify Bixby to Enable Sleep Mode
+  triggers:
+  - entity_id: input_boolean.night_mode
+    to: 'on'
+    trigger: state
+  actions:
+  - action: notify.mobile_app_z_fold5
+    data:
+      message: Enable Sleep Mode
+      title: Home Assistant
+      data:
+        channel: Hidden
+- id: '1741196226334'
+  alias: Install CATT on Startup
+  description: ''
+  triggers:
+  - event: start
+    trigger: homeassistant
+  actions:
+  - action: shell_command.install_catt
