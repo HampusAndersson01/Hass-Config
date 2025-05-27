@@ -1,3 +1,0 @@
-[submodule "apps"]
-	path = appdaemon/apps
-	url = https://github.com/HampusAndersson01/HASS-AppDaemon-Scripts
