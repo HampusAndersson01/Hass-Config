@@ -1,0 +1,60 @@
+lightning:
+  module: lightning
+  class: Lightning
+  main_light: light.all
+  focus_light: light.roof_lamp_3
+  bedroom_night_light: light.wall_lamp
+  presence_night_lights:
+    - light.roof_lamp_1
+    - light.roof_lamp_2
+    - light.star_light
+  presence_sensor: binary_sensor.presence_detector
+  presence_mode_switch: input_boolean.presence_mode
+  christmas_mode_switch: input_boolean.christmas_mode
+  focus_mode_switch: input_boolean.desk_focus_lights
+  night_mode_switch: input_boolean.night_mode
+  phone_state_sensor: sensor.hampus_zfold_phone_state
+  charger_type_sensor: sensor.hampus_zfold_charger_type
+  christmas_lights_even:
+    - light.christmas2
+  christmas_lights_odd:
+    - light.christmas1
+  christmas_delay: 5
+  log_level: DEBUG
+  all_lights:
+    - light.star_light
+    - light.roof_lamp_1
+    - light.roof_lamp_2
+    - light.roof_lamp_3
+    - light.roof_lamp_4
+    - light.wall_lamp
+    - light.yeelight_strip
+  reference_light: light.roof_lamp_1
+
+dashboard_nest_app:
+  module: dashboard_nest_app
+  class: DashboardToNestHubApp
+
+# Nodalink - Context-aware automation engine
+nodalink:
+  module: Nodalink.scenario_engine
+  class: NodalinkEngine
+  scenario_file: /config/appdaemon/apps/Nodalink/scenarios.json
+  log_file: /config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log
+  config_file: /config/appdaemon/apps/Nodalink/config.json
+  time_bucket_minutes: 60
+  test_mode: false
+  fallback_enabled: true
+  ui_enabled: true
+  allowed_domains:
+    - light
+    - switch
+    - scene
+    - script
+    - automation
+    - media_player
+    - climate
+    - cover
+    - fan
+    - vacuum
+    - notify
