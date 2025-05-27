@@ -7,12 +7,15 @@ This repository contains my Home Assistant configuration files and the Nodalink 
 This repository serves as a custom Home Assistant add-on repository containing three add-ons that provide a complete context-aware automation solution:
 
 ### 🔗 Nodalink AppDaemon Engine
+
 The core automation engine that processes scenarios and executes actions based on context.
 
-### 🚀 Nodalink API Server  
+### 🚀 Nodalink API Server
+
 FastAPI REST server for managing scenarios and configuration.
 
 ### 🎨 Nodalink Frontend
+
 Modern Vue.js web interface for visual scenario editing.
 
 ## Add-on Installation
@@ -23,8 +26,9 @@ Modern Vue.js web interface for visual scenario editing.
 4. The Nodalink add-ons will appear in your add-on store
 
 Install the add-ons in this order:
+
 1. Nodalink AppDaemon Engine
-2. Nodalink API Server  
+2. Nodalink API Server
 3. Nodalink Frontend
 
 After installation, access the web interface at `http://your-ha-ip:3000`

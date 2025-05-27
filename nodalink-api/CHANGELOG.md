@@ -3,6 +3,7 @@
 ## [1.0.0] - 2025-05-27
 
 ### Added
+
 - Initial release of Nodalink API Server
 - FastAPI REST server for scenario management
 - Configuration management endpoints

@@ -9,7 +9,7 @@ appdaemon:
       type: hass
       ha_url: http://supervisor/core
       token: !secret appdaemon_key
-      
+
 http:
   url: http://127.0.0.1:5050
 

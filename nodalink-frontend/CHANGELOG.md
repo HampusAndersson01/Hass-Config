@@ -3,6 +3,7 @@
 ## [1.0.0] - 2025-05-27
 
 ### Added
+
 - Initial release of Nodalink Frontend
 - Modern Vue.js web interface
 - Visual node-based scenario editor

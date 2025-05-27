@@ -35,15 +35,21 @@ app.add_middleware(
 )
 
 # File paths from environment variables
-SCENARIOS_FILE = os.getenv("SCENARIO_FILE", "/config/appdaemon/apps/Nodalink/scenarios.json")
-UNMATCHED_LOG_FILE = os.getenv("LOG_FILE", "/config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log")
-CONFIG_FILE = os.getenv("CONFIG_FILE", "/config/appdaemon/apps/Nodalink/config.json")
+SCENARIOS_FILE = os.getenv(
+    "SCENARIO_FILE", "/config/appdaemon/apps/Nodalink/scenarios.json")
+UNMATCHED_LOG_FILE = os.getenv(
+    "LOG_FILE", "/config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log")
+CONFIG_FILE = os.getenv(
+    "CONFIG_FILE", "/config/appdaemon/apps/Nodalink/config.json")
 
 # Pydantic models
+
+
 class ScenarioAction(BaseModel):
     service: str
     entity_id: str
     data: Dict[str, Any] = {}
+
 
 class ScenarioRequest(BaseModel):
     room: str
@@ -52,6 +58,7 @@ class ScenarioRequest(BaseModel):
     optional_flags: List[str] = []
     interaction_type: str = ""
     actions: List[ScenarioAction]
+
 
 class ScenarioResponse(BaseModel):
     scenario_id: str
@@ -62,16 +69,19 @@ class ScenarioResponse(BaseModel):
     interaction_type: str
     actions: List[Dict[str, Any]]
 
+
 class ValidationResponse(BaseModel):
     valid: bool
     errors: List[str]
     warnings: List[str] = []
+
 
 class RoomMapping(BaseModel):
     label: str
     entity_id: str
     entity_type: str
     description: str = ""
+
 
 class ConditionalEntity(BaseModel):
     label: str
@@ -80,6 +90,7 @@ class ConditionalEntity(BaseModel):
     description: str = ""
     icon: str = ""
 
+
 class SystemSettings(BaseModel):
     time_bucket_minutes: int = 60
     fallback_enabled: bool = True
@@ -87,12 +98,15 @@ class SystemSettings(BaseModel):
     auto_reload_config: bool = True
     allowed_domains: List[str] = []
 
+
 class ConfigRequest(BaseModel):
     room_mappings: List[RoomMapping] = []
     conditional_entities: List[ConditionalEntity] = []
     system_settings: SystemSettings = SystemSettings()
 
 # Utility functions
+
+
 def load_scenarios() -> Dict[str, Any]:
     """Load scenarios from file."""
     try:
@@ -104,6 +118,7 @@ def load_scenarios() -> Dict[str, Any]:
         print(f"Error loading scenarios: {e}")
         return {}
 
+
 def save_scenarios(scenarios: Dict[str, Any]) -> bool:
     """Save scenarios to file."""
     try:
@@ -114,6 +129,7 @@ def save_scenarios(scenarios: Dict[str, Any]) -> bool:
     except Exception as e:
         print(f"Error saving scenarios: {e}")
         return False
+
 
 def load_config() -> Dict[str, Any]:
     """Load configuration from file."""
@@ -136,6 +152,7 @@ def load_config() -> Dict[str, Any]:
         print(f"Error loading config: {e}")
         return {}
 
+
 def save_config(config: Dict[str, Any]) -> bool:
     """Save configuration to file."""
     try:
@@ -148,10 +165,13 @@ def save_config(config: Dict[str, Any]) -> bool:
         return False
 
 # API endpoints
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 
 @app.get("/scenarios")
 async def get_scenarios():
@@ -159,12 +179,13 @@ async def get_scenarios():
     scenarios = load_scenarios()
     return {"scenarios": scenarios}
 
+
 @app.post("/scenarios")
 async def create_scenario(scenario: ScenarioRequest):
     """Create a new scenario."""
     try:
         scenarios = load_scenarios()
-        
+
         # Build scenario ID
         scenario_id = build_scenario_id(
             scenario.room,
@@ -173,10 +194,10 @@ async def create_scenario(scenario: ScenarioRequest):
             scenario.optional_flags,
             scenario.interaction_type
         )
-        
+
         # Convert actions to dict format
         actions = [action.dict() for action in scenario.actions]
-        
+
         # Store scenario
         scenarios[scenario_id] = {
             "room": scenario.room,
@@ -188,14 +209,16 @@ async def create_scenario(scenario: ScenarioRequest):
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat()
         }
-        
+
         if save_scenarios(scenarios):
             return {"scenario_id": scenario_id, "message": "Scenario created successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to save scenario")
-            
+            raise HTTPException(
+                status_code=500, detail="Failed to save scenario")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/scenarios/{scenario_id}")
 async def get_scenario(scenario_id: str):
@@ -203,25 +226,26 @@ async def get_scenario(scenario_id: str):
     scenarios = load_scenarios()
     if scenario_id not in scenarios:
         raise HTTPException(status_code=404, detail="Scenario not found")
-    
+
     scenario_data = scenarios[scenario_id]
     return ScenarioResponse(
         scenario_id=scenario_id,
         **scenario_data
     )
 
+
 @app.put("/scenarios/{scenario_id}")
 async def update_scenario(scenario_id: str, scenario: ScenarioRequest):
     """Update an existing scenario."""
     try:
         scenarios = load_scenarios()
-        
+
         if scenario_id not in scenarios:
             raise HTTPException(status_code=404, detail="Scenario not found")
-        
+
         # Convert actions to dict format
         actions = [action.dict() for action in scenario.actions]
-        
+
         # Update scenario
         scenarios[scenario_id].update({
             "room": scenario.room,
@@ -232,37 +256,41 @@ async def update_scenario(scenario_id: str, scenario: ScenarioRequest):
             "actions": actions,
             "updated_at": datetime.now().isoformat()
         })
-        
+
         if save_scenarios(scenarios):
             return {"message": "Scenario updated successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to save scenario")
-            
+            raise HTTPException(
+                status_code=500, detail="Failed to save scenario")
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.delete("/scenarios/{scenario_id}")
 async def delete_scenario(scenario_id: str):
     """Delete a scenario."""
     try:
         scenarios = load_scenarios()
-        
+
         if scenario_id not in scenarios:
             raise HTTPException(status_code=404, detail="Scenario not found")
-        
+
         del scenarios[scenario_id]
-        
+
         if save_scenarios(scenarios):
             return {"message": "Scenario deleted successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to save scenarios")
-            
+            raise HTTPException(
+                status_code=500, detail="Failed to save scenarios")
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/scenarios/validate")
 async def validate_scenario(scenario: ScenarioRequest):
@@ -270,27 +298,27 @@ async def validate_scenario(scenario: ScenarioRequest):
     try:
         errors = []
         warnings = []
-        
+
         # Validate scenario ID components
         if not scenario.room:
             errors.append("Room is required")
-        
+
         if not scenario.actions:
             errors.append("At least one action is required")
-        
+
         # Validate actions
         for i, action in enumerate(scenario.actions):
             if not action.service:
                 errors.append(f"Action {i+1}: Service is required")
             if not action.entity_id:
                 errors.append(f"Action {i+1}: Entity ID is required")
-        
+
         return ValidationResponse(
             valid=len(errors) == 0,
             errors=errors,
             warnings=warnings
         )
-        
+
     except Exception as e:
         return ValidationResponse(
             valid=False,
@@ -298,11 +326,13 @@ async def validate_scenario(scenario: ScenarioRequest):
             warnings=[]
         )
 
+
 @app.get("/config")
 async def get_config():
     """Get current configuration."""
     config = load_config()
     return config
+
 
 @app.post("/config")
 async def update_config(config: ConfigRequest):
@@ -313,14 +343,16 @@ async def update_config(config: ConfigRequest):
             "conditional_entities": [entity.dict() for entity in config.conditional_entities],
             "system_settings": config.system_settings.dict()
         }
-        
+
         if save_config(config_dict):
             return {"message": "Configuration updated successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to save configuration")
-            
+            raise HTTPException(
+                status_code=500, detail="Failed to save configuration")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/unmatched-scenarios")
 async def get_unmatched_scenarios():
@@ -337,6 +369,7 @@ async def get_unmatched_scenarios():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/suggestions")
 async def get_suggestions():
     """Get scenario suggestions based on unmatched scenarios."""
@@ -347,6 +380,8 @@ async def get_suggestions():
         raise HTTPException(status_code=500, detail=str(e))
 
 # WebSocket endpoint for real-time updates
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time updates."""

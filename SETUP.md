@@ -65,17 +65,19 @@ Addons/
 Install the add-ons in this specific order:
 
 #### 1. Nodalink AppDaemon Engine
+
 - Find "Nodalink AppDaemon Engine" in the add-on store
 - Click **Install**
 - Configure options:
   ```yaml
-  time_zone: "Europe/Stockholm"  # Your timezone
+  time_zone: "Europe/Stockholm" # Your timezone
   test_mode: false
   ```
 - Click **Start**
 - Enable **Start on boot** and **Watchdog**
 
-#### 2. Nodalink API Server  
+#### 2. Nodalink API Server
+
 - Find "Nodalink API Server" in the add-on store
 - Click **Install**
 - Configure options:
@@ -87,7 +89,8 @@ Install the add-ons in this specific order:
 - Enable **Start on boot** and **Watchdog**
 
 #### 3. Nodalink Frontend
-- Find "Nodalink Frontend" in the add-on store  
+
+- Find "Nodalink Frontend" in the add-on store
 - Click **Install**
 - Configure options:
   ```yaml
@@ -130,13 +133,15 @@ Install the add-ons in this specific order:
 ## Configuration Files
 
 The add-ons share configuration files stored in:
+
 - `/config/appdaemon/apps/Nodalink/scenarios.json` - Scenario definitions
-- `/config/appdaemon/apps/Nodalink/config.json` - System configuration  
+- `/config/appdaemon/apps/Nodalink/config.json` - System configuration
 - `/config/appdaemon/apps/Nodalink/logs/` - Log files
 
 ## Key Features
 
 ### AppDaemon Engine
+
 - ✅ Context-aware automation processing
 - ✅ Time-bucket based scenario matching
 - ✅ Room and device type mapping
@@ -145,6 +150,7 @@ The add-ons share configuration files stored in:
 - ✅ Test mode for safe testing
 
 ### API Server
+
 - ✅ RESTful scenario management
 - ✅ Configuration management
 - ✅ Real-time WebSocket updates
@@ -153,6 +159,7 @@ The add-ons share configuration files stored in:
 - ✅ CORS support
 
 ### Frontend
+
 - ✅ Visual node-based editor
 - ✅ Real-time analytics dashboard
 - ✅ Configuration management UI
@@ -164,10 +171,12 @@ The add-ons share configuration files stored in:
 ### Common Issues
 
 1. **Frontend can't connect to API**
+
    - Check that API server is running on port 8002
    - Verify API URL in frontend configuration
 
 2. **AppDaemon engine not processing scenarios**
+
    - Check AppDaemon logs in the add-on log tab
    - Verify scenario file exists and is valid JSON
 

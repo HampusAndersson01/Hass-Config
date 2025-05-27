@@ -14,7 +14,7 @@ FastAPI REST server for managing Nodalink scenarios and configuration.
 ## API Endpoints
 
 - `GET /scenarios` - List all scenarios
-- `POST /scenarios` - Create new scenario  
+- `POST /scenarios` - Create new scenario
 - `GET /scenarios/{id}` - Get specific scenario
 - `PUT /scenarios/{id}` - Update scenario
 - `DELETE /scenarios/{id}` - Delete scenario

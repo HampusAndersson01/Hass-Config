@@ -18,13 +18,11 @@
   "schema": {
     "time_zone": "str",
     "scenario_file": "str",
-    "config_file": "str", 
+    "config_file": "str",
     "log_file": "str",
     "test_mode": "bool"
   },
-  "services": [
-    "mqtt:need"
-  ],
+  "services": ["mqtt:need"],
   "homeassistant_api": true,
   "hassio_api": true,
   "hassio_role": "homeassistant",
