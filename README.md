@@ -1,19 +1,34 @@
-# Home Assistant Configuration
+# Home Assistant Configuration & Nodalink Add-ons
 
-This repository contains my Home Assistant configuration files and automations.
+This repository contains my Home Assistant configuration files and the Nodalink Home Assistant Add-ons.
 
-## Structure
+## Nodalink Add-ons
 
-- `config/` - Main configuration files
-- `appdaemon/` - AppDaemon apps and configuration
+This repository serves as a custom Home Assistant add-on repository containing three add-ons that provide a complete context-aware automation solution:
 
-## Getting Started
+### 🔗 Nodalink AppDaemon Engine
+The core automation engine that processes scenarios and executes actions based on context.
 
-1. Copy the configuration files to your Home Assistant config directory
-2. Update `secrets.yaml` with your specific values
-3. Restart Home Assistant
+### 🚀 Nodalink API Server  
+FastAPI REST server for managing scenarios and configuration.
 
-## Notes
+### 🎨 Nodalink Frontend
+Modern Vue.js web interface for visual scenario editing.
 
-- Sensitive information is stored in `secrets.yaml` (not included in this repo)
-- Make sure to customize the configuration for your specific setup
+## Add-on Installation
+
+1. In Home Assistant, go to **Supervisor** → **Add-on Store**
+2. Click the **⋮** menu and select **Repositories**
+3. Add this repository URL: `https://github.com/hampusandersson01/hass-config`
+4. The Nodalink add-ons will appear in your add-on store
+
+Install the add-ons in this order:
+1. Nodalink AppDaemon Engine
+2. Nodalink API Server  
+3. Nodalink Frontend
+
+After installation, access the web interface at `http://your-ha-ip:3000`
+
+## Home Assistant Configuration
+
+The `config/` and `appdaemon/` directories contain my personal Home Assistant setup.

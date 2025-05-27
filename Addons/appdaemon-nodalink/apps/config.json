@@ -1,0 +1,95 @@
+{
+  "_metadata": {
+    "version": "1.0.0",
+    "created": "2025-05-26",
+    "description": "Nodalink system configuration - rooms, sensors, and conditional flags",
+    "last_updated": "2025-05-26T20:48:00"
+  },
+  "room_mappings": {
+    "living_room": {
+      "label": "Living Room",
+      "entity_id": "binary_sensor.presence_detector",
+      "entity_type": "binary_sensor",
+      "description": "Main living area presence detection"
+    },
+    "bedroom": {
+      "label": "Bedroom",
+      "entity_id": "binary_sensor.bedroom_motion",
+      "entity_type": "binary_sensor",
+      "description": "Bedroom motion sensor"
+    },
+    "kitchen": {
+      "label": "Kitchen",
+      "entity_id": "binary_sensor.kitchen_motion",
+      "entity_type": "binary_sensor",
+      "description": "Kitchen motion detection"
+    },
+    "office": {
+      "label": "Office",
+      "entity_id": "binary_sensor.office_motion",
+      "entity_type": "binary_sensor",
+      "description": "Office/workspace motion sensor"
+    },
+    "bathroom": {
+      "label": "Bathroom",
+      "entity_id": "binary_sensor.bathroom_motion",
+      "entity_type": "binary_sensor",
+      "description": "Bathroom motion sensor"
+    },
+    "hallway": {
+      "label": "Hallway",
+      "entity_id": "binary_sensor.hallway_motion",
+      "entity_type": "binary_sensor",
+      "description": "Hallway/corridor motion detection"
+    }
+  },
+  "conditional_entities": {
+    "christmas_mode": {
+      "label": "Christmas Mode",
+      "entity_id": "input_boolean.christmas_mode",
+      "entity_type": "input_boolean",
+      "description": "Enable festive lighting and decorations",
+      "icon": "🎄"
+    },
+    "night_mode": {
+      "label": "Night Mode",
+      "entity_id": "input_boolean.night_mode",
+      "entity_type": "input_boolean",
+      "description": "Dimmed lighting for nighttime",
+      "icon": "🌙"
+    },
+    "focus_mode": {
+      "label": "Focus Mode",
+      "entity_id": "input_boolean.desk_focus_lights",
+      "entity_type": "input_boolean",
+      "description": "Optimize environment for productivity",
+      "icon": "🎯"
+    },
+    "presence_mode": {
+      "label": "Presence Mode",
+      "entity_id": "input_boolean.presence_mode",
+      "entity_type": "input_boolean",
+      "description": "Automatic presence-based automations",
+      "icon": "👤"
+    }
+  },
+  "system_settings": {
+    "time_bucket_minutes": 60,
+    "fallback_enabled": true,
+    "test_mode": false,
+    "auto_reload_config": true,
+    "allowed_domains": [
+      "light",
+      "switch",
+      "scene",
+      "script",
+      "automation",
+      "media_player",
+      "climate",
+      "cover",
+      "fan",
+      "vacuum",
+      "notify"
+    ]
+  }
+}

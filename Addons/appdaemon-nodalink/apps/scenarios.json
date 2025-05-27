@@ -1,0 +1,26 @@
+{
+  "_metadata": {
+    "version": "1.0.0",
+    "created": "2025-05-26",
+    "description": "Nodalink scenario definitions - context-aware smart home automations",
+    "format": "scenario_id: [list of Home Assistant service calls]",
+    "scenario_id_format": "room|time_bucket|[day_type]|[optional_flags]|[interaction_type]"
+  },
+
+  "_examples": {
+    "full_scenario": "living_room|18-19|weekday|christmas_mode+night_mode|single_press",
+    "minimal_scenario": "kitchen|07-08",
+    "room_only": "bedroom"
+  },
+
+  "living_room|18-19|weekday|presence_detected": [
+    {
+      "service": "light.turn_on",
+      "entity_id": "light.living_room_main",
+      "data": {
+        "brightness": 180,
+        "color_temp": 300
+      }
+    }
+  ]
+}

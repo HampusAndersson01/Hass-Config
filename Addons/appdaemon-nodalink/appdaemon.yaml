@@ -1,0 +1,37 @@
+secrets: /config/secrets.yaml
+appdaemon:
+  latitude: !secret latitude
+  longitude: !secret longitude
+  elevation: !secret elevation
+  time_zone: UTC
+  plugins:
+    HASS:
+      type: hass
+      ha_url: http://supervisor/core
+      token: !secret appdaemon_key
+      
+http:
+  url: http://127.0.0.1:5050
+
+admin:
+  title: AppDaemon
+  stats_update: realtime
+
+api:
+
+hadashboard:
+
+logs:
+  main_log:
+    filename: /config/appdaemon/logs/appdaemon.log
+    log_generations: 3
+    log_size: 1000000
+  access_log:
+    filename: /config/appdaemon/logs/access.log
+  error_log:
+    filename: /config/appdaemon/logs/error.log
+
+apps:
+  nodalink_engine:
+    module: scenario_engine
+    class: NodalinkEngine

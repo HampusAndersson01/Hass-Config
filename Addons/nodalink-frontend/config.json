@@ -1,0 +1,39 @@
+{
+  "name": "Nodalink Frontend",
+  "version": "1.0.0",
+  "slug": "nodalink-frontend",
+  "description": "Vue.js frontend for Nodalink visual automation editor",
+  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "startup": "application",
+  "boot": "auto",
+  "init": false,
+  "map": ["config"],
+  "ports": {
+    "3000/tcp": 3000
+  },
+  "ports_description": {
+    "3000/tcp": "Nodalink frontend web interface"
+  },
+  "options": {
+    "port": 3000,
+    "api_url": "http://localhost:8002"
+  },
+  "schema": {
+    "port": "port",
+    "api_url": "url"
+  },
+  "services": [],
+  "homeassistant_api": false,
+  "hassio_api": false,
+  "hassio_role": "default",
+  "host_network": false,
+  "privileged": [],
+  "full_access": false,
+  "apparmor": true,
+  "devices": [],
+  "environment": {
+    "LOG_LEVEL": "info"
+  },
+  "tmpfs": "size=30m,uid=1000",
+  "image": "ghcr.io/home-assistant/{arch}-addon-nodalink-frontend"
+}
