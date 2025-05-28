@@ -5,11 +5,11 @@
   "addons": {
     "nodalink_core": {
       "repository": "local",
-      "target": "nodalink-core"
+      "target": "nodalink_core"
     },
     "nodalink_frontend": {
       "repository": "local", 
-      "target": "nodalink-frontend"
+      "target": "nodalink_frontend"
     }
   }
 }
