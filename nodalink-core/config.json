@@ -1,0 +1,55 @@
+{
+  "name": "Nodalink Core",
+  "version": "1.0.0",
+  "slug": "nodalink-core",
+  "description": "Combined AppDaemon + FastAPI core engine for Nodalink visual automation",
+  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "startup": "application",
+  "boot": "auto",
+  "init": false,
+  "map": ["config", "share"],
+  "ports": {
+    "8002/tcp": 8002,
+    "5050/tcp": 5050
+  },
+  "ports_description": {
+    "8002/tcp": "Nodalink FastAPI server",
+    "5050/tcp": "AppDaemon dashboard (optional)"
+  },
+  "options": {
+    "api_port": 8002,
+    "api_host": "0.0.0.0",
+    "time_zone": "UTC",
+    "scenario_file": "/config/appdaemon/apps/Nodalink/scenarios.json",
+    "config_file": "/config/appdaemon/apps/Nodalink/config.json",
+    "log_file": "/config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log",
+    "test_mode": false,
+    "cors_origins": ["*"]
+  },
+  "schema": {
+    "api_port": "port",
+    "api_host": "str",
+    "time_zone": "str",
+    "scenario_file": "str",
+    "config_file": "str",
+    "log_file": "str",
+    "test_mode": "bool",
+    "cors_origins": ["str"]
+  },
+  "services": ["mqtt:need"],
+  "homeassistant_api": true,
+  "hassio_api": true,
+  "hassio_role": "homeassistant",
+  "host_network": true,
+  "privileged": [],
+  "full_access": false,
+  "apparmor": true,
+  "devices": [],
+  "environment": {
+    "LOG_LEVEL": "info",
+    "SCENARIO_FILE": "/config/appdaemon/apps/Nodalink/scenarios.json",
+    "CONFIG_FILE": "/config/appdaemon/apps/Nodalink/config.json",
+    "LOG_FILE": "/config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log"
+  },
+  "tmpfs": "size=30m,uid=1000"
+}

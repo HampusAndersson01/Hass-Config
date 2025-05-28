@@ -1,10 +1,12 @@
 """
 Nodalink Scenario Engine
 A context-aware automation engine for Home Assistant using AppDaemon.
+Integrated with FastAPI for shared in-memory access.
 """
 
 import json
 import os
+import sys
 import socket
 import threading
 import traceback
@@ -19,6 +21,17 @@ from .scenario_utils import (
     evaluate_conditions,
     sanitize_entity_id
 )
+
+# Import shared state from FastAPI app
+try:
+    # Add the api directory to Python path
+    api_path = os.path.join(os.path.dirname(__file__), '..', 'api')
+    sys.path.insert(0, api_path)
+    from main import get_shared_state
+    SHARED_STATE_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Shared state not available: {e}")
+    SHARED_STATE_AVAILABLE = False
 
 
 class NodalinkEngine(hass.Hass):
@@ -35,6 +48,17 @@ class NodalinkEngine(hass.Hass):
             "log_file", "/config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log")
         self.config_file = self.args.get(
             "config_file", "/config/appdaemon/apps/Nodalink/config.json")
+
+        # Initialize shared state integration
+        self.shared_state = None
+        if SHARED_STATE_AVAILABLE:
+            try:
+                self.shared_state = get_shared_state()
+                self.shared_state.set_engine_instance(self)
+                self.log("🔗 Connected to shared state for FastAPI integration")
+            except Exception as e:
+                self.log(f"⚠️ Failed to connect to shared state: {e}")
+                self.shared_state = None
 
         # Load UI-managed configuration
         self.config = self._load_config()
@@ -60,16 +84,133 @@ class NodalinkEngine(hass.Hass):
         # Load scenarios
         self.scenarios = self._load_scenarios()
 
-        # Initialize FastAPI UI server if enabled
-        ui_enabled = self.args.get("ui_enabled", True)
-        if ui_enabled:
-            self.launch_ui_server()
+        # Update shared state with initial data
+        if self.shared_state:
+            self.shared_state.update_scenarios(self.scenarios)
+            self.shared_state.update_config(self.config)
+            self.shared_state.update_engine_status({
+                "running": True,
+                "scenarios_loaded": len(self.scenarios),
+                "last_execution": None,
+                "last_config_update": datetime.now().isoformat()
+            })
 
         self.log(
             f"✅ Nodalink Engine initialized with {len(self.scenarios)} scenarios")
         if self.test_mode:
             self.log(
                 "🧪 Test mode enabled - scenarios will be logged but not executed")
+
+        # Register state change listeners for room sensors
+        self._setup_listeners()
+
+    def _setup_listeners(self):
+        """Set up listeners for room sensor state changes."""
+        if not self.room_mappings:
+            self.log("⚠️ No room mappings configured, skipping listener setup")
+            return
+
+        for room_id, entity_id in self.room_mappings.items():
+            if entity_id:
+                self.listen_state(self._handle_room_sensor_change, entity_id,
+                                room_id=room_id, entity_id=entity_id)
+                self.log(f"👂 Listening for changes on {entity_id} (room: {room_id})")
+
+    def _handle_room_sensor_change(self, entity, attribute, old, new, kwargs):
+        """Handle room sensor state changes."""
+        room_id = kwargs.get("room_id")
+        entity_id = kwargs.get("entity_id")
+        
+        if new == "on" and old != "on":
+            self.log(f"🚶 Motion detected in {room_id} ({entity_id})")
+            self._process_room_interaction(room_id, "motion")
+        
+        # Update shared state with sensor activity
+        if self.shared_state:
+            self.shared_state.add_log_entry("INFO", 
+                f"Sensor state change: {entity_id} -> {new}", 
+                {"room_id": room_id, "old_state": old, "new_state": new})
+
+    def _process_room_interaction(self, room_id: str, interaction_type: str = "motion"):
+        """Process a room interaction and execute matching scenarios."""
+        try:
+            # Get current time bucket and day type
+            time_bucket = get_time_bucket(datetime.now(), self.time_bucket_minutes)
+            day_type = get_day_type(datetime.now())
+
+            # Get active conditional flags
+            conditional_flags = self._get_active_conditional_flags()
+
+            # Build scenario ID
+            scenario_id = build_scenario_id(
+                room_id, time_bucket, day_type, conditional_flags, interaction_type
+            )
+
+            self.log(f"🔍 Looking for scenario: {scenario_id}")
+
+            # Try to find matching scenario (with fallback logic)
+            scenario = self._find_matching_scenario(
+                room_id, time_bucket, day_type, conditional_flags, interaction_type
+            )
+
+            if scenario:
+                self.log(f"✅ Found matching scenario: {scenario.get('scenario_id', 'Unknown')}")
+                self._execute_scenario(scenario)
+                
+                # Update shared state
+                if self.shared_state:
+                    self.shared_state.update_engine_status({
+                        "last_execution": datetime.now().isoformat()
+                    })
+            else:
+                self.log(f"❌ No matching scenario found for: {scenario_id}")
+                self._log_unmatched_scenario(scenario_id, room_id, time_bucket, 
+                                           day_type, conditional_flags, interaction_type)
+
+        except Exception as e:
+            self.log(f"❌ Error processing room interaction: {e}")
+            self.log(f"Traceback: {traceback.format_exc()}")
+
+    def _get_active_conditional_flags(self) -> List[str]:
+        """Get list of currently active conditional flags."""
+        active_flags = []
+        
+        for flag_id, entity_id in self.conditional_entities.items():
+            if entity_id:
+                try:
+                    state = self.get_state(entity_id)
+                    if state and state.lower() in ["on", "true", "active", "home"]:
+                        active_flags.append(flag_id)
+                except Exception as e:
+                    self.log(f"⚠️ Error checking conditional entity {entity_id}: {e}")
+        
+        return active_flags
+
+    def _log_unmatched_scenario(self, scenario_id: str, room_id: str, time_bucket: str,
+                               day_type: str, conditional_flags: List[str], interaction_type: str):
+        """Log unmatched scenario for analysis."""
+        try:
+            unmatched_data = {
+                "timestamp": datetime.now().isoformat(),
+                "scenario_id": scenario_id,
+                "room_id": room_id,
+                "time_bucket": time_bucket,
+                "day_type": day_type,
+                "conditional_flags": conditional_flags,
+                "interaction_type": interaction_type
+            }
+            
+            # Log to file
+            os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
+            with open(self.log_file, 'a') as f:
+                f.write(json.dumps(unmatched_data) + '\n')
+            
+            # Update shared state
+            if self.shared_state:
+                self.shared_state.add_unmatched_scenario(unmatched_data)
+                
+        except Exception as e:
+            self.log(f"❌ Error logging unmatched scenario: {e}")
 
     def is_port_open(self, port: int, host: str = "localhost") -> bool:
         """Check if a port is already in use."""
@@ -610,132 +751,121 @@ class NodalinkEngine(hass.Hass):
 
         return None
 
-    def _execute_actions(self, actions: List[Dict[str, Any]], scenario_id: str):
-        """Execute a list of actions."""
+    def _execute_scenario(self, scenario: Dict[str, Any]):
+        """Execute a scenario's actions."""
+        if not scenario:
+            return
+            
+        actions = scenario.get("actions", [])
+        scenario_id = scenario.get("scenario_id", "Unknown")
+        
+        if self.test_mode:
+            self.log(f"🧪 TEST MODE - Would execute {len(actions)} actions for {scenario_id}")
+            for i, action in enumerate(actions):
+                self.log(f"  Action {i+1}: {action.get('service', 'unknown')} -> {action.get('entity_id', 'unknown')}")
+            return
+        
+        self.log(f"🚀 Executing {len(actions)} actions for scenario: {scenario_id}")
+        
         for i, action in enumerate(actions):
             try:
-                if self.test_mode:
-                    self.log(f"🧪 TEST MODE - Would execute: {action}")
-                    continue
-
-                # Validate action
-                if not validate_service_call(action):
-                    self.log(
-                        f"❌ Invalid service call in scenario {scenario_id}: {action}")
-                    continue
-
-                domain = action.get("domain", action.get(
-                    "service", "").split(".")[0])
-                if domain not in self.allowed_domains:
-                    self.log(f"🚫 Domain not allowed: {domain}")
-                    continue
-
-                # Execute service call
-                service = action.get(
-                    "service", f"{domain}.{action.get('action', 'turn_on')}")
-                entity_id = action.get("entity_id", "")
-                data = action.get("data", {})
-
-                if entity_id:
-                    entity_id = sanitize_entity_id(entity_id)
-                    data["entity_id"] = entity_id
-
-                self.log(f"🎬 Executing: {service} with data: {data}")
-                self.call_service(service, **data)
-
+                self._execute_action(action, i+1)
             except Exception as e:
-                self.log(
-                    f"❌ Error executing action {i} in scenario {scenario_id}: {e}")
+                self.log(f"❌ Error executing action {i+1}: {e}")
+                if self.shared_state:
+                    self.shared_state.add_log_entry("ERROR", 
+                        f"Failed to execute action {i+1} in scenario {scenario_id}: {e}")
 
-    def _evaluate_optional_flags(self) -> List[str]:
-        """Evaluate conditional entities to determine active flags."""
-        flags = []
-
-        for flag_name, entity_id in self.conditional_entities.items():
-            try:
-                state = self.get_state(entity_id)
-                if state == "on":
-                    flags.append(flag_name)
-            except Exception as e:
-                self.log(
-                    f"⚠️ Error evaluating flag {flag_name} ({entity_id}): {e}")
-
-        return sorted(flags)  # Sort for consistent scenario IDs
-
-    def _get_room_from_device(self, device_id: str) -> Optional[str]:
-        """Map device ID to room name."""
-        for room, mapped_device in self.room_mappings.items():
-            if mapped_device == device_id:
-                return room
-        return None
-
-    def _get_room_from_entity(self, entity_id: str) -> Optional[str]:
-        """Map entity ID to room name."""
-        for room, mapped_entity in self.room_mappings.items():
-            if mapped_entity == entity_id:
-                return room
-        return None
-
-    def _map_button_command(self, command: str) -> str:
-        """Map button command to interaction type."""
-        command_map = {
-            "single": "single_press",
-            "double": "double_press",
-            "hold": "long_press",
-            "release": "release",
-            "1_single": "single_press",
-            "1_double": "double_press",
-            "1_hold": "long_press"
-        }
-        return command_map.get(command, command)
-
-    def _log_unmatched_scenario(self, scenario_id: str, context: Dict[str, Any]):
-        """Log unmatched scenarios for analysis."""
+    def _execute_action(self, action: Dict[str, Any], action_num: int):
+        """Execute a single action."""
+        service = action.get("service", "")
+        entity_id = action.get("entity_id", "")
+        data = action.get("data", {})
+        
+        if not service or not entity_id:
+            self.log(f"❌ Action {action_num}: Missing service or entity_id")
+            return
+        
+        # Validate service call
+        if not validate_service_call(service, entity_id, self.allowed_domains):
+            self.log(f"❌ Action {action_num}: Service call not allowed: {service}")
+            return
+        
         try:
-            os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
-
-            log_entry = {
-                "scenario_id": scenario_id,
-                "context": context,
-                "timestamp": datetime.now().isoformat()
-            }
-
-            with open(self.log_file, 'a') as f:
-                f.write(json.dumps(log_entry) + "\n")
-
-            self.log(f"📝 Logged unmatched scenario: {scenario_id}")
-
+            # Split service into domain and action
+            if "." in service:
+                domain, action_name = service.split(".", 1)
+                self.call_service(service, entity_id=entity_id, **data)
+                self.log(f"✅ Action {action_num}: {service} -> {entity_id}")
+            else:
+                self.log(f"❌ Action {action_num}: Invalid service format: {service}")
+                
         except Exception as e:
-            self.log(f"❌ Error logging unmatched scenario: {e}")
+            self.log(f"❌ Action {action_num}: Service call failed: {e}")
+            raise
 
     def reload_scenarios(self):
-        """Reload scenarios from file (for UI integration)."""
+        """Reload scenarios from file and update shared state."""
+        self.log("🔄 Reloading scenarios...")
+        old_count = len(self.scenarios)
         self.scenarios = self._load_scenarios()
-        self.log(f"🔄 Reloaded {len(self.scenarios)} scenarios")
+        new_count = len(self.scenarios)
+        
+        # Update shared state
+        if self.shared_state:
+            self.shared_state.update_scenarios(self.scenarios)
+            self.shared_state.update_engine_status({
+                "scenarios_loaded": new_count,
+                "last_config_update": datetime.now().isoformat()
+            })
+            self.shared_state.add_log_entry("INFO", 
+                f"Scenarios reloaded: {old_count} -> {new_count}")
+        
+        self.log(f"✅ Reloaded scenarios: {old_count} -> {new_count}")
 
-    def get_scenario_stats(self) -> Dict[str, Any]:
-        """Get statistics about scenarios (for UI)."""
-        return {
-            "total_scenarios": len(self.scenarios),
-            "rooms": list(set(s.split("|")[0] for s in self.scenarios.keys())),
-            "last_reload": datetime.now().isoformat()
-        }
+    def reload_config(self):
+        """Reload configuration from file and update shared state."""
+        self.log("🔄 Reloading configuration...")
+        self.config = self._load_config()
+        self.room_mappings = self._extract_room_mappings()
+        self.conditional_entities = self._extract_conditional_entities()
+        
+        # Update shared state
+        if self.shared_state:
+            self.shared_state.update_config(self.config)
+            self.shared_state.add_log_entry("INFO", "Configuration reloaded")
+        
+        self.log("✅ Configuration reloaded")
 
     def simulate_scenario(self, room: str, interaction_type: str = "manual") -> Dict[str, Any]:
-        """Simulate a scenario trigger (for testing)."""
-        """Simulate scenario execution for testing purposes."""
-        original_test_mode = self.test_mode
-        self.test_mode = True
-
-        try:
-            self._process_scenario_trigger(
-                room=room,
-                interaction_type=interaction_type,
-                trigger_type="simulation",
-                source_entity="nodalink_simulator"
-            )
-            return {"status": "success", "message": f"Simulated scenario for {room}"}
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
-        finally:
-            self.test_mode = original_test_mode
+        """Simulate a scenario execution for testing."""
+        current_time = datetime.now()
+        time_bucket = get_time_bucket(current_time, self.time_bucket_minutes)
+        day_type = get_day_type(current_time)
+        conditional_flags = self._get_active_conditional_flags()
+        
+        scenario = self._find_matching_scenario(
+            room, time_bucket, day_type, conditional_flags, interaction_type
+        )
+        
+        result = {
+            "room": room,
+            "interaction_type": interaction_type,
+            "time_bucket": time_bucket,
+            "day_type": day_type,
+            "conditional_flags": conditional_flags,
+            "timestamp": current_time.isoformat(),
+            "scenario_found": scenario is not None
+        }
+        
+        if scenario:
+            result.update({
+                "scenario_id": scenario.get("scenario_id", "Unknown"),
+                "actions": scenario.get("actions", []),
+                "action_count": len(scenario.get("actions", []))
+            })
+            self.log(f"🎭 Simulation successful for {room}: {len(scenario.get('actions', []))} actions found")
+        else:
+            self.log(f"🎭 Simulation for {room}: No matching scenario found")
+        
+        return result

@@ -1,5 +1,15 @@
 {
   "name": "Nodalink Home Assistant Add-ons",
   "url": "https://github.com/hampusandersson01/hass-config",
-  "maintainer": "Hampus Andersson"
+  "maintainer": "Hampus Andersson",
+  "addons": {
+    "nodalink-core": {
+      "repository": "local",
+      "target": "nodalink-core"
+    },
+    "nodalink-frontend": {
+      "repository": "local", 
+      "target": "nodalink-frontend"
+    }
+  }
 }

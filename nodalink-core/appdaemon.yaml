@@ -4,6 +4,9 @@ appdaemon:
   longitude: !secret longitude
   elevation: !secret elevation
   time_zone: UTC
+  missing_app_warnings: 1
+  production_mode: False
+  app_dir: /usr/share/nodalink-core/apps
   plugins:
     HASS:
       type: hass
@@ -14,7 +17,7 @@ http:
   url: http://127.0.0.1:5050
 
 admin:
-  title: AppDaemon
+  title: Nodalink AppDaemon
   stats_update: realtime
 
 api:
@@ -35,3 +38,7 @@ apps:
   nodalink_engine:
     module: scenario_engine
     class: NodalinkEngine
+    scenario_file: /config/appdaemon/apps/Nodalink/scenarios.json
+    config_file: /config/appdaemon/apps/Nodalink/config.json
+    log_file: /config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log
+    ui_enabled: false  # Disabled since FastAPI handles the UI

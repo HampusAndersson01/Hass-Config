@@ -16,11 +16,13 @@
   },
   "options": {
     "port": 3000,
-    "api_url": "http://localhost:8002"
+    "api_url": "http://supervisor:8002",
+    "websocket_url": "ws://supervisor:8002/ws"
   },
   "schema": {
     "port": "port",
-    "api_url": "url"
+    "api_url": "url",
+    "websocket_url": "str"
   },
   "services": [],
   "homeassistant_api": false,
@@ -34,6 +36,5 @@
   "environment": {
     "LOG_LEVEL": "info"
   },
-  "tmpfs": "size=30m,uid=1000",
-  "image": "ghcr.io/home-assistant/{arch}-addon-nodalink-frontend"
+  "tmpfs": "size=30m,uid=1000"
 }
