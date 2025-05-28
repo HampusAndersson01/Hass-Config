@@ -5,15 +5,15 @@ FROM $BUILD_FROM
 RUN apk add --no-cache \
     python3 \
     python3-dev \
-    py3-pip \
     gcc \
     musl-dev \
     curl \
     netcat-openbsd \
     && rm -rf /var/cache/apk/*
 
-# Create Python virtual environment
-RUN python3 -m venv /opt/venv
+# Create Python virtual environment and activate it
+RUN python3 -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip setuptools wheel
 
 # Install Python dependencies for merged AppDaemon + FastAPI in virtual environment
 RUN /opt/venv/bin/pip install --no-cache-dir \
