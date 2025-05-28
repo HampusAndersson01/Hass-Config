@@ -11,16 +11,22 @@ RUN apk add --no-cache \
     netcat-openbsd \
     bash \
     jq \
+    git \
     && rm -rf /var/cache/apk/*
 
 # Install bashio for proper Home Assistant add-on logging
-RUN curl -J -L -o /tmp/bashio.tar.gz \
-    "https://github.com/hassio-addons/bashio/archive/v0.16.2.tar.gz" \
-    && mkdir /tmp/bashio \
-    && tar zxvf /tmp/bashio.tar.gz --strip 1 -C /tmp/bashio \
-    && mv /tmp/bashio/lib /usr/lib/bashio \
-    && ln -s /usr/lib/bashio/bashio /usr/bin/bashio \
-    && rm -rf /tmp/bashio.tar.gz /tmp/bashio
+# Use multiple fallback methods for better reliability
+RUN set -e && \
+    (git clone --depth 1 --branch v0.16.2 https://github.com/hassio-addons/bashio.git /tmp/bashio || \
+     git clone --depth 1 https://github.com/hassio-addons/bashio.git /tmp/bashio || \
+     { mkdir -p /tmp/bashio && \
+       curl -fsSL https://github.com/hassio-addons/bashio/archive/refs/heads/main.tar.gz | \
+       tar -xz --strip-components=1 -C /tmp/bashio; }) && \
+    mkdir -p /usr/lib/bashio && \
+    cp -r /tmp/bashio/lib/* /usr/lib/bashio/ && \
+    ln -sf /usr/lib/bashio/bashio /usr/bin/bashio && \
+    chmod +x /usr/bin/bashio && \
+    rm -rf /tmp/bashio
 
 # Create Python virtual environment and activate it
 RUN python3 -m venv /opt/venv \

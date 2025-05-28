@@ -1,6 +1,19 @@
 # Changelog
 
 
+## [1.0.8] - 2025-05-28
+### Fixed
+- Enhanced bashio installation with multiple fallback methods for improved Docker build reliability
+- Added curl-based fallback when git clone fails during bashio installation
+- Improved error handling in Dockerfile to prevent build failures from network issues
+
+## [1.0.7] - 2025-05-28
+### Fixed
+- Fixed bashio installation in Dockerfile to use git clone instead of curl for better reliability
+- Resolved Docker build issues with bashio dependency installation
+- Improved error handling during bashio setup with fallback methods
+- Enhanced container build process stability
+
 ## [1.0.6] - 2025-05-28
 ### Fixed
 - Resolved logging startup failure (`bashio::log.level.notice: command not found`)
