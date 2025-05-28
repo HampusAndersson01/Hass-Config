@@ -3,11 +3,11 @@
   "url": "https://github.com/HampusAndersson01/Hass-Config",
   "maintainer": "Hampus Andersson",
   "addons": {
-    "nodalink-core": {
+    "nodalink_core": {
       "repository": "local",
       "target": "nodalink-core"
     },
-    "nodalink-frontend": {
+    "nodalink_frontend": {
       "repository": "local", 
       "target": "nodalink-frontend"
     }

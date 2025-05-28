@@ -1,7 +1,7 @@
 {
   "name": "Nodalink Frontend",
   "version": "1.0.1",
-  "slug": "nodalink-frontend",
+  "slug": "nodalink_frontend",
   "description": "Vue.js frontend for Nodalink visual automation editor",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
   "startup": "application",
