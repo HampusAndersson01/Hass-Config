@@ -1,20 +1,32 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install Node.js and nginx
+# Install Node.js and nginx with specific versions for stability
 RUN apk add --no-cache \
-    nodejs \
+    nodejs>=18 \
     npm \
     nginx \
     curl \
+    python3 \
+    make \
+    g++ \
+    git \
     && rm -rf /var/cache/apk/*
+
+# Set environment variables for Node.js
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV CYPRESS_INSTALL_BINARY=0
+ENV HUSKY_SKIP_INSTALL=1
 
 # Set working directory for build
 WORKDIR /build
 
-# Copy package.json and install dependencies
-COPY frontend/package.json .
-RUN npm install
+# Copy package files first (for better Docker caching)
+COPY frontend/package*.json ./
+
+# Install dependencies with production optimizations
+RUN npm ci --no-audit --no-fund --prefer-offline
 
 # Copy frontend source code
 COPY frontend/ .

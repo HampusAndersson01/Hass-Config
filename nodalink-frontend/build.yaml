@@ -8,7 +8,7 @@ build_from:
 labels:
   org.opencontainers.image.title: "Nodalink Frontend"
   org.opencontainers.image.description: "Vue.js frontend for Nodalink visual automation editor"
-  org.opencontainers.image.source: "https://github.com/yourusername/nodalink"
+  org.opencontainers.image.source: "https://github.com/hampusandersson01/hass-config/tree/main/nodalink-frontend"
   org.opencontainers.image.licenses: "MIT"
 
 args:

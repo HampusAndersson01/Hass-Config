@@ -18,7 +18,7 @@
                 </el-button>
                 <el-button
                   @click="testScenario"
-                  :icon="Play"
+                  :icon="VideoPlay"
                   type="success"
                   plain
                 >
@@ -289,7 +289,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { ElMessage } from "element-plus";
-import { Delete, Play, Check, Plus } from "@element-plus/icons-vue";
+import { Delete, VideoPlay, Check, Plus } from "@element-plus/icons-vue";
 import { useScenarioStore } from "../stores/scenario";
 
 const scenarioStore = useScenarioStore();
