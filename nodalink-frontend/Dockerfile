@@ -28,6 +28,9 @@ COPY frontend/package*.json ./
 # Install dependencies with production optimizations
 RUN npm ci --no-audit --no-fund --prefer-offline
 
+# Install vite globally to ensure it's available for build
+RUN npm install -g vite
+
 # Copy frontend source code
 COPY frontend/ .
 

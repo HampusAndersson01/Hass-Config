@@ -68,7 +68,7 @@ check_service_health() {
 start_fastapi() {
     bashio::log.info "Starting FastAPI server on ${API_HOST}:${API_PORT}..."
     cd /usr/share/nodalink-core/api
-    exec python3 -m uvicorn main:app \
+    exec /opt/venv/bin/python -m uvicorn main:app \
         --host "${API_HOST}" \
         --port "${API_PORT}" \
         --log-level info \
@@ -80,7 +80,7 @@ start_fastapi() {
 start_appdaemon() {
     bashio::log.info "Starting AppDaemon..."
     cd /usr/share/nodalink-core
-    exec appdaemon -c /usr/share/nodalink-core
+    exec /opt/venv/bin/appdaemon -c /usr/share/nodalink-core
 }
 
 # Function to handle shutdown

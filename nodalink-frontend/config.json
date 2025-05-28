@@ -1,6 +1,6 @@
 {
   "name": "Nodalink Frontend",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "slug": "nodalink_frontend",
   "description": "Vue.js frontend for Nodalink visual automation editor",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
@@ -36,5 +36,5 @@
   "environment": {
     "LOG_LEVEL": "info"
   },
-  "tmpfs": "size=30m,uid=1000"
+  "tmpfs": true
 }

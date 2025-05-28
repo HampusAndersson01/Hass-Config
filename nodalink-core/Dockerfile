@@ -12,8 +12,11 @@ RUN apk add --no-cache \
     netcat-openbsd \
     && rm -rf /var/cache/apk/*
 
-# Install Python dependencies for merged AppDaemon + FastAPI
-RUN pip3 install --no-cache-dir \
+# Create Python virtual environment
+RUN python3 -m venv /opt/venv
+
+# Install Python dependencies for merged AppDaemon + FastAPI in virtual environment
+RUN /opt/venv/bin/pip install --no-cache-dir \
     appdaemon==4.4.2 \
     fastapi==0.104.1 \
     uvicorn[standard]==0.24.0 \
@@ -23,6 +26,9 @@ RUN pip3 install --no-cache-dir \
     jinja2 \
     aiofiles \
     python-multipart
+
+# Update PATH to use virtual environment binaries
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Create unified directory structure
 RUN mkdir -p /usr/share/nodalink-core/apps \

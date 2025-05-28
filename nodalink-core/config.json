@@ -1,6 +1,6 @@
 {
   "name": "Nodalink Core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "slug": "nodalink_core",
   "description": "Combined AppDaemon + FastAPI core engine for Nodalink visual automation",
   "url": "https://github.com/HampusAndersson01/Hass-Config/",
@@ -52,5 +52,5 @@
     "CONFIG_FILE": "/config/appdaemon/apps/Nodalink/config.json",
     "LOG_FILE": "/config/appdaemon/apps/Nodalink/logs/unmatched_scenarios.log"
   },
-  "tmpfs": "size=30m,uid=1000"
+  "tmpfs": true
 }
