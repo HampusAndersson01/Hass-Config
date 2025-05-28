@@ -1,5 +1,14 @@
 # Changelog
 
+
+## [1.0.6] - 2025-05-28
+### Fixed
+- Resolved logging startup failure (`bashio::log.level.notice: command not found`)
+- Updated logging to follow latest best practices for HA add-ons
+- Added bashio installation to Dockerfile for proper Home Assistant add-on logging
+- Implemented robust logging functions with graceful fallbacks
+- Enhanced startup script stability and error handling
+
 ## 1.0.5
 - Fixed unbound variable error in startup script
 - Improved variable initialization and error handling in run.sh

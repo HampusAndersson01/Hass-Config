@@ -1,7 +1,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install base packages
+# Install base packages and bashio
 RUN apk add --no-cache \
     python3 \
     python3-dev \
@@ -9,7 +9,18 @@ RUN apk add --no-cache \
     musl-dev \
     curl \
     netcat-openbsd \
+    bash \
+    jq \
     && rm -rf /var/cache/apk/*
+
+# Install bashio for proper Home Assistant add-on logging
+RUN curl -J -L -o /tmp/bashio.tar.gz \
+    "https://github.com/hassio-addons/bashio/archive/v0.16.2.tar.gz" \
+    && mkdir /tmp/bashio \
+    && tar zxvf /tmp/bashio.tar.gz --strip 1 -C /tmp/bashio \
+    && mv /tmp/bashio/lib /usr/lib/bashio \
+    && ln -s /usr/lib/bashio/bashio /usr/bin/bashio \
+    && rm -rf /tmp/bashio.tar.gz /tmp/bashio
 
 # Create Python virtual environment and activate it
 RUN python3 -m venv /opt/venv \
