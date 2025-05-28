@@ -4,6 +4,8 @@
 # Starts both AppDaemon and FastAPI services with shared in-memory access
 # ==============================================================================
 
+bashio::log.level.notice "🚀 Starting Nodalink Core add-on..."
+
 # Set default values in case config fails to load
 declare TIME_ZONE="UTC"
 declare API_PORT="8002"
@@ -24,14 +26,19 @@ LOG_FILE=$(bashio::config 'log_file')
 TEST_MODE=$(bashio::config 'test_mode')
 
 # Handle CORS origins with proper JSON parsing
-CORS_RAW=$(bashio::config 'cors_origins')
-# Handle the case where it's a JSON array vs a single string
-if [[ "${CORS_RAW}" == "[" ]]; then
-    # It's a JSON array, get the first element as a default
-    CORS_ORIGINS=$(bashio::config 'cors_origins[0]')
+if bashio::config.exists 'cors_origins'; then
+    if bashio::config.is_array 'cors_origins'; then
+        # It's a JSON array, convert to comma-separated string for CORS middleware
+        CORS_ORIGINS=$(bashio::config 'cors_origins | join(",")')
+        # If empty, set default
+        [ -z "$CORS_ORIGINS" ] && CORS_ORIGINS="*"
+    else
+        # It's a string option
+        CORS_ORIGINS=$(bashio::config 'cors_origins')
+    fi
 else
-    # It's either a single string value or not specified
-    CORS_ORIGINS="${CORS_RAW:-*}"
+    # Not specified
+    CORS_ORIGINS="*" 
 fi
 
 # Set environment variables for shared access
@@ -93,13 +100,12 @@ check_service_health() {
             return 0
         fi
         
-        # Increase wait time for subsequent checks (exponential backoff with cap)
-        if [ "$wait_time" -lt 10 ]; then
-            wait_time=$((wait_time * 1.5))
-        fi
+        # Exponential backoff with cap at 10s
+        wait_time=$((wait_time < 10 ? wait_time * 2 : 10))
         
-        bashio::log.info "Waiting for ${service_name} to be ready (attempt ${attempt}/${max_attempts})..."
-        sleep $wait_time
+        # Use notice level instead of info for better visibility
+        bashio::log.notice "Waiting for ${service_name} to be ready (attempt ${attempt}/${max_attempts}, next check in ${wait_time}s)..."
+        sleep "$wait_time"
         attempt=$((attempt + 1))
     done
     
@@ -111,24 +117,37 @@ check_service_health() {
 start_fastapi() {
     bashio::log.info "Starting FastAPI server on ${API_HOST}:${API_PORT}..."
     
-    # Use absolute paths instead of cd for better reliability
+    cd /usr/share/nodalink-core/api || {
+        bashio::log.error "Failed to change directory to /usr/share/nodalink-core/api"
+        return 1
+    }
+    
+    # Use absolute paths for better reliability
     # Remove exec as we need to return from this function
     /opt/venv/bin/python -m uvicorn main:app \
         --host "${API_HOST}" \
         --port "${API_PORT}" \
         --log-level info \
         --reload \
-        --access-log \
-        --app-dir /usr/share/nodalink-core/api
+        --access-log &
+    
+    return $?
 }
 
 # Function to start AppDaemon
 start_appdaemon() {
     bashio::log.info "Starting AppDaemon..."
     
-    # Use absolute paths instead of cd for better reliability
+    cd /usr/share/nodalink-core || {
+        bashio::log.error "Failed to change directory to /usr/share/nodalink-core"
+        return 1
+    }
+    
+    # Use absolute paths for better reliability
     # Remove exec as we need to return from this function
-    /opt/venv/bin/appdaemon -c /usr/share/nodalink-core
+    /opt/venv/bin/appdaemon -c /usr/share/nodalink-core &
+    
+    return $?
 }
 
 # Function to handle shutdown
@@ -189,35 +208,50 @@ fi
 # Check if ports are already in use (avoid port conflicts)
 if nc -z localhost "${API_PORT}" >/dev/null 2>&1; then
     bashio::log.warning "Port ${API_PORT} is already in use. Check for conflicting services."
+    bashio::exit.nok "Port ${API_PORT} already in use by another service. Please change the port in your addon configuration."
 fi
 
 if nc -z localhost "5050" >/dev/null 2>&1; then
     bashio::log.warning "Port 5050 (AppDaemon) is already in use. Check for conflicting services."
+    bashio::exit.nok "Port 5050 (AppDaemon) already in use by another service."
 fi
 
 # Start FastAPI first (AppDaemon will connect to it)
-bashio::log.info "Step 1: Starting FastAPI server..."
-start_fastapi &
+bashio::log.notice "Step 1/2: Starting FastAPI server..."
+start_fastapi
 FASTAPI_PID=$!
 
-# Wait for FastAPI to be ready with proper error handling
+if [ -z "$FASTAPI_PID" ] || ! kill -0 "$FASTAPI_PID" 2>/dev/null; then
+    bashio::log.error "FastAPI process failed to start!"
+    cleanup
+    bashio::exit.nok "Failed to start FastAPI process"
+fi
+
+# Wait for FastAPI to be ready
 sleep 5
 if ! check_service_health "FastAPI" "${API_PORT}"; then
     bashio::log.error "FastAPI failed to start properly. Check the API configuration and port availability."
     cleanup
-    exit 1
+    bashio::exit.nok "FastAPI service health check failed"
 fi
 
 # Start AppDaemon (it will connect to the shared state)
-bashio::log.info "Step 2: Starting AppDaemon engine..."
-start_appdaemon &
+bashio::log.notice "Step 2/2: Starting AppDaemon engine..."
+start_appdaemon
 APPDAEMON_PID=$!
 
+if [ -z "$APPDAEMON_PID" ] || ! kill -0 "$APPDAEMON_PID" 2>/dev/null; then
+    bashio::log.error "AppDaemon process failed to start!"
+    cleanup
+    bashio::exit.nok "Failed to start AppDaemon process"
+fi
+
 # Wait with better checking for AppDaemon
-sleep 5
-if ! nc -z localhost 5050 >/dev/null 2>&1; then
-    bashio::log.warning "AppDaemon admin interface not responding yet, waiting a bit longer..."
-    sleep 10
+if ! check_service_health "AppDaemon" "5050"; then
+    bashio::log.warning "AppDaemon admin interface not responding on expected port."
+    # Continue anyway as some setups might have disabled the admin interface
+    # but we'll note this in the logs
+    bashio::log.notice "Continuing startup despite AppDaemon admin interface not being detected."
 fi
 
 bashio::log.info "-------------------------------------------"
@@ -240,13 +274,16 @@ declare -i max_restarts=5
 declare -i restart_reset_time=3600  # 1 hour in seconds
 declare -i last_restart_reset=$(date +%s)
 
+# Core monitoring loop
+bashio::log.info "Starting process monitoring..."
+
 while true; do
     current_time=$(date +%s)
     
     # Reset restart counters after the specified time
     if [ $((current_time - last_restart_reset)) -ge $restart_reset_time ]; then
         if [ $fastapi_restarts -gt 0 ] || [ $appdaemon_restarts -gt 0 ]; then
-            bashio::log.info "Resetting restart counters (FastAPI: ${fastapi_restarts}, AppDaemon: ${appdaemon_restarts})"
+            bashio::log.notice "Resetting service restart counters (FastAPI: ${fastapi_restarts}, AppDaemon: ${appdaemon_restarts})"
             fastapi_restarts=0
             appdaemon_restarts=0
         fi
@@ -258,13 +295,27 @@ while true; do
         fastapi_restarts=$((fastapi_restarts + 1))
         
         if [ $fastapi_restarts -le $max_restarts ]; then
-            bashio::log.error "FastAPI process died, restarting... (Restart ${fastapi_restarts}/${max_restarts})"
-            start_fastapi &
+            bashio::log.warning "FastAPI process died, restarting... (Restart ${fastapi_restarts}/${max_restarts})"
+            
+            # Record the restart in persistent data
+            mkdir -p /data/nodalink
+            echo "$(date +%Y-%m-%d\ %H:%M:%S) - FastAPI process restarted (${fastapi_restarts}/${max_restarts})" >> /data/nodalink/restart_history.log
+            
+            start_fastapi
             FASTAPI_PID=$!
-            sleep 5
+            
+            # Check if restart was successful
+            if [ -z "$FASTAPI_PID" ] || ! kill -0 "$FASTAPI_PID" 2>/dev/null; then
+                bashio::log.error "Failed to restart FastAPI process!"
+            else
+                bashio::log.notice "FastAPI process restarted successfully with PID ${FASTAPI_PID}"
+            fi
         else
-            bashio::log.error "FastAPI restarted too many times (${fastapi_restarts}). Please check the logs for errors."
-            bashio::log.error "Continuing to monitor but not restarting FastAPI until the reset period."
+            bashio::log.error "FastAPI restarted too many times (${fastapi_restarts}/${max_restarts}). Please check the logs for errors."
+            bashio::log.warning "Continuing to monitor but not restarting FastAPI until the reset period."
+            
+            # Add failure record
+            echo "$(date +%Y-%m-%d\ %H:%M:%S) - CRITICAL: FastAPI restart limit reached (${fastapi_restarts}/${max_restarts})" >> /data/nodalink/restart_history.log
         fi
     fi
     
@@ -273,14 +324,33 @@ while true; do
         appdaemon_restarts=$((appdaemon_restarts + 1))
         
         if [ $appdaemon_restarts -le $max_restarts ]; then
-            bashio::log.error "AppDaemon process died, restarting... (Restart ${appdaemon_restarts}/${max_restarts})"
-            start_appdaemon &
+            bashio::log.warning "AppDaemon process died, restarting... (Restart ${appdaemon_restarts}/${max_restarts})"
+            
+            # Record the restart in persistent data
+            mkdir -p /data/nodalink
+            echo "$(date +%Y-%m-%d\ %H:%M:%S) - AppDaemon process restarted (${appdaemon_restarts}/${max_restarts})" >> /data/nodalink/restart_history.log
+            
+            start_appdaemon
             APPDAEMON_PID=$!
-            sleep 10
+            
+            # Check if restart was successful
+            if [ -z "$APPDAEMON_PID" ] || ! kill -0 "$APPDAEMON_PID" 2>/dev/null; then
+                bashio::log.error "Failed to restart AppDaemon process!"
+            else
+                bashio::log.notice "AppDaemon process restarted successfully with PID ${APPDAEMON_PID}"
+            fi
         else
-            bashio::log.error "AppDaemon restarted too many times (${appdaemon_restarts}). Please check the logs for errors."
-            bashio::log.error "Continuing to monitor but not restarting AppDaemon until the reset period."
+            bashio::log.error "AppDaemon restarted too many times (${appdaemon_restarts}/${max_restarts}). Please check the logs for errors."
+            bashio::log.warning "Continuing to monitor but not restarting AppDaemon until the reset period."
+            
+            # Add failure record
+            echo "$(date +%Y-%m-%d\ %H:%M:%S) - CRITICAL: AppDaemon restart limit reached (${appdaemon_restarts}/${max_restarts})" >> /data/nodalink/restart_history.log
         fi
+    fi
+    
+    # Log a periodic heartbeat to confirm monitoring is active
+    if [ $((current_time % 3600)) -lt 30 ]; then 
+        bashio::log.debug "Nodalink Core monitoring heartbeat: FastAPI and AppDaemon processes running"
     fi
     
     # Make sure we don't consume too much CPU with constant checks

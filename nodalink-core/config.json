@@ -1,6 +1,6 @@
 {
   "name": "Nodalink Core",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "slug": "nodalink_core",
   "description": "Combined AppDaemon + FastAPI core engine for Nodalink visual automation",
   "url": "https://github.com/HampusAndersson01/Hass-Config/",

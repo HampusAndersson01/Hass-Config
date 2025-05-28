@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.5
+- Fixed unbound variable error in startup script
+- Improved variable initialization and error handling in run.sh
+- Enhanced environment variable handling with proper defaults
+- Fixed CORS origins configuration parsing
+- Improved process management and health checks 
+
 ## 1.0.4
 - Enhanced startup script with improved error handling and stability
 - Added restart limits to prevent restart loops
